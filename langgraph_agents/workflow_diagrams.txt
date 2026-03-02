@@ -1,0 +1,464 @@
+# LangGraph Workflow Diagrams
+
+## 1. Basic Workflow Diagram
+
+```
+┌─────────┐
+│  START  │
+└────┬────┘
+     ↓
+┌─────────────────┐
+│   Data Loader   │
+│ • Load formats  │
+│ • Initialize    │
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│ Anomaly Detector│
+│ • IQR method    │
+│ • Z-score       │
+│ • Rare categories│
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│   Decision      │
+│ Anomalies found?│
+└─────┬───────────┘
+      │Yes                No
+      ↓                   ↓
+┌─────────────────┐   ┌─────────────────┐
+│ Anomaly Handler │   │ Null Detector   │
+│ • Cap outliers  │   │ • Count nulls   │
+│ • Remove/transform│ │ • Percentages   │
+└─────┬───────────┘   └─────┬───────────┘
+      ↓                   ↓
+      └─────────┬─────────┘
+                ↓
+        ┌─────────────────┐
+        │   Decision      │
+        │  Nulls found?   │
+        └─────┬───────────┘
+              │Yes                No
+              ↓                   ↓
+        ┌─────────────────┐   ┌─────────────────┐
+        │  Null Handler   │   │Feature Processor│
+        │ • Smart impute  │   │ • Encoding      │
+        │ • Mean/median   │   │ • Scaling       │
+        └─────┬───────────┘   └─────┬───────────┘
+              ↓                   ↓
+              └─────────┬─────────┘
+                        ↓
+                ┌─────────────────┐
+                │    Validator    │
+                │ • ML-readiness  │
+                │ • Validation    │
+                └─────┬───────────┘
+                      ↓
+              ┌─────────────────┐
+              │   Decision      │
+              │Validation passed?│
+              └─────┬───────────┘
+                    │Yes            No
+                    ↓               ↓
+                ┌─────────┐   ┌─────────────────┐
+                │   END   │   │ Retry Decision  │
+                └─────────┘   │ • Strategy adj  │
+                              └─────┬───────────┘
+                                    ↓
+                            ┌─────────────────┐
+                            │ Retry Decision  │
+                            │ Max iterations? │
+                            └─────┬───────────┘
+                                  │Yes            No
+                                  ↓               ↓
+                          ┌─────────┐   ┌─────────┐
+                          │  Retry  │   │   END   │
+                          └────┬────┘   └─────────┘
+                               ↓
+                        (Feedback loop to Anomaly Detector)
+```
+
+## 2. Enhanced Workflow Diagram
+
+```
+┌─────────┐
+│  START  │
+└────┬────┘
+     ↓
+┌─────────────────┐
+│   Data Loader   │
+│ • Load formats  │
+│ • File validation│
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│ Schema Validator│
+│ • Pydantic      │
+│ • Type constraints│
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│   Decision      │
+│Schema valid?    │
+└─────┬───────────┘
+      │No                 Yes
+      ↓                   ↓
+┌─────────────────┐   ┌─────────────────┐
+│ Schema Enforcer │   │ Data Type Caster│
+│ • Type casting  │   │ • Auto detection│
+│ • Compliance    │   │ • Intelligent   │
+└─────┬───────────┘   └─────┬───────────┘
+      ↓                   ↓
+      └─────────┬─────────┘
+                ↓
+        ┌─────────────────┐
+        │Format Normalizer│
+        │ • Date standard │
+        │ • Email/phone   │
+        └─────┬───────────┘
+              ↓
+        ┌─────────────────┐
+        │Encoding Standard│
+        │ • UTF-8 enforce │
+        │ • Detection     │
+        └─────┬───────────┘
+              ↓
+        ┌─────────────────┐
+        │Ref Integrity    │
+        │ • PK/FK valid   │
+        │ • Duplicate det │
+        └─────┬───────────┘
+              ↓
+        ┌─────────────────┐
+        │ Anomaly Detector│
+        │ • IQR/Z-score   │
+        │ • Rare categories│
+        └─────┬───────────┘
+              ↓
+        ┌─────────────────┐
+        │   Decision      │
+        │ Anomalies found?│
+        └─────┬───────────┘
+              │Yes                No
+              ↓                   ↓
+        ┌─────────────────┐   ┌─────────────────┐
+        │ Anomaly Handler │   │ Null Detector   │
+        │ • Multiple strat│ │ • Comprehensive  │
+        │ • Cap/remove/tra│ │ • Analysis       │
+        └─────┬───────────┘   └─────┬───────────┘
+              ↓                   ↓
+              └─────────┬─────────┘
+                        ↓
+                ┌─────────────────┐
+                │   Decision      │
+                │  Nulls found?   │
+                └─────┬───────────┘
+                      │Yes                No
+                      ↓                   ↓
+                ┌─────────────────┐   ┌─────────────────┐
+                │  Null Handler   │   │ Quality Rules   │
+                │ • Smart impute  │ │ • Range checks  │
+                │ • Multiple strat│ │ • Pattern match  │
+                └─────┬───────────┘   └─────┬───────────┘
+                      ↓                   ↓
+                      └─────────┬─────────┘
+                                ↓
+                        ┌─────────────────┐
+                        │ Quality Rules   │
+                        │ • REJECT/FLAG   │
+                        │ • QUARANTINE/FIX│
+                        └─────┬───────────┘
+                              ↓
+                        ┌─────────────────┐
+                        │  Deduplicator   │
+                        │ • PK-based      │
+                        │ • Hash-based    │
+                        └─────┬───────────┘
+                              ↓
+                        ┌─────────────────┐
+                        │Feature Processor│
+                        │ • Encoding      │
+                        │ • Scaling       │
+                        │ • Engineering   │
+                        └─────┬───────────┘
+                              ↓
+                        ┌─────────────────┐
+                        │    Validator    │
+                        │ • ML-readiness  │
+                        │ • Comprehensive │
+                        └─────┬───────────┘
+                              ↓
+                        ┌─────────────────┐
+                        │   Decision      │
+                        │Validation passed?│
+                        └─────┬───────────┘
+                              │Yes            No
+                              ↓               ↓
+                          ┌─────────┐   ┌─────────────────┐
+                          │   END   │   │ Retry Decision  │
+                          └─────────┘   │ • Strategy adj  │
+                                        └─────┬───────────┘
+                                              ↓
+                                      ┌─────────────────┐
+                                      │ Retry Decision  │
+                                      │ Max iterations? │
+                                      └─────┬───────────┘
+                                            │Yes            No
+                                            ↓               ↓
+                                        ┌─────────┐   ┌─────────┐
+                                        │  Retry  │   │   END   │
+                                        └────┬────┘   └─────────┘
+                                             ↓
+                                      (Feedback loop to Anomaly Detector)
+```
+
+## 3. Parallel Processing Architecture
+
+```
+┌─────────────────┐
+│  Input Data     │
+│  Large Dataset  │
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│ Data Partitioner│
+│ • Row partition  │
+│ • Column grouping│
+│ • Key-based     │
+│ • Date-based    │
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│ Parallel Executor│
+│ • Thread pool    │
+│ • Process pool   │
+│ • Async support  │
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│  Worker Processes│
+│ • Independent    │
+│ • Parallel exec  │
+│ • Error handling │
+│ ┌─┬─┬─┬─┐      │
+│ │1│2│3│4│      │
+│ └─┴─┴─┴─┘      │
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│Result Aggregator│
+│ • Combine results│
+│ • Error collection│
+│ • Performance   │
+└─────┬───────────┘
+      ↓
+┌─────────────────┐
+│ Processed Data  │
+│ Clean & Validated│
+└─────────────────┘
+
+Worker Details:
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│ Worker 1        │ │ Worker 2        │ │ Worker 3        │ │ Worker 4        │
+│ Schema Validation│ │ Type Casting    │ │ Quality Rules   │ │ Anomaly Detection│
+│ • Pydantic      │ │ • Auto detect   │ │ • Range checks  │ │ • IQR/Z-score   │
+│ • Type constraints│ │ • Intelligent   │ │ • Pattern match  │ │ • Rare categories│
+└─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘
+```
+
+## 4. Agent Communication Flow
+
+```
+Data Loader
+    ↓ "Data loaded with shape (100, 5)"
+Schema Validator
+    ↓ "Schema validation passed/failed"
+Type Caster
+    ↓ "Data types casted (5 changes)"
+Format Normalizer
+    ↓ "Formats normalized (3 changes)"
+Encoding Standardizer
+    ↓ "Encoding standardized (2 fixes)"
+Integrity Checker
+    ↓ "Referential integrity checked"
+Anomaly Detector
+    ↓ "Anomalies detected (3 patterns)"
+Anomaly Handler
+    ↓ "Anomalies handled using 'cap' strategy"
+Null Detector
+    ↓ "Null values detected (2 columns)"
+Null Handler
+    ↓ "Null values handled using 'smart' strategy"
+Quality Rules Engine
+    ↓ "Quality rules applied (15 violations)"
+Deduplicator
+    ↓ "Duplicates removed (5 rows)"
+Feature Processor
+    ↓ "Features processed (7 transformations)"
+Validator
+    ↓ "Validation passed/failed"
+Retry Decision
+    ↓ "Retry with new strategies" (if failed)
+    ↓
+    (Feedback loop back to Anomaly Detector)
+```
+
+## 5. Node Connections Summary
+
+### Basic Workflow Nodes:
+1. START → Data Loader
+2. Data Loader → Anomaly Detector
+3. Anomaly Detector → Anomaly Handler (if anomalies)
+4. Anomaly Detector → Null Detector (if no anomalies)
+5. Anomaly Handler → Null Detector
+6. Null Detector → Null Handler (if nulls)
+7. Null Detector → Feature Processor (if no nulls)
+8. Null Handler → Feature Processor
+9. Feature Processor → Validator
+10. Validator → END (if passed)
+11. Validator → Retry Decision (if failed)
+12. Retry Decision → Anomaly Detector (retry)
+13. Retry Decision → END (max iterations)
+
+### Enhanced Workflow Nodes:
+1. START → Data Loader
+2. Data Loader → Schema Validator
+3. Schema Validator → Schema Enforcer (if invalid)
+4. Schema Validator → Type Caster (if valid)
+5. Schema Enforcer → Type Caster
+6. Type Caster → Format Normalizer
+7. Format Normalizer → Encoding Standardizer
+8. Encoding Standardizer → Integrity Checker
+9. Integrity Checker → Anomaly Detector
+10. Anomaly Detector → Anomaly Handler (if anomalies)
+11. Anomaly Detector → Null Detector (if no anomalies)
+12. Anomaly Handler → Null Detector
+13. Null Detector → Null Handler (if nulls)
+14. Null Detector → Quality Rules (if no nulls)
+15. Null Handler → Quality Rules
+16. Quality Rules → Deduplicator
+17. Deduplicator → Feature Processor
+18. Feature Processor → Validator
+19. Validator → END (if passed)
+20. Validator → Retry Decision (if failed)
+21. Retry Decision → Anomaly Detector (retry)
+22. Retry Decision → END (max iterations)
+
+## 6. Conditional Routing Logic
+
+### After Schema Validation:
+```python
+if schema_validation_result['valid']:
+    goto("cast_types")
+else:
+    goto("enforce_schema")
+```
+
+### After Anomaly Detection:
+```python
+if len(anomalies_detected) > 0:
+    goto("handle_anomalies")
+else:
+    goto("detect_nulls")
+```
+
+### After Null Detection:
+```python
+if len(null_values_info) > 0:
+    goto("handle_nulls")
+else:
+    goto("apply_quality_rules")
+```
+
+### After Validation:
+```python
+if validation_passed:
+    goto(END)
+elif iteration_count < max_iterations:
+    goto("retry_decision")
+else:
+    goto(END)
+```
+
+## 7. Feedback Loop Mechanism
+
+```
+Iteration 1:
+  Anomaly Detector → Anomaly Handler (cap) → ... → Validator (FAIL)
+    ↓
+  Retry Decision: Switch to "flag" strategy
+    ↓
+Iteration 2:
+  Anomaly Detector → Anomaly Handler (flag) → ... → Validator (FAIL)
+    ↓
+  Retry Decision: Switch to "median" for nulls
+    ↓
+Iteration 3:
+  Anomaly Detector → Anomaly Handler (flag) → ... → Validator (PASS)
+    ↓
+  END
+```
+
+## 8. Agent Dependencies
+
+### Parallel Execution Groups:
+- **Group 1 (Can run in parallel):**
+  - Type Casting
+  - Format Normalization
+  - Encoding Standardization
+
+- **Group 2 (Sequential dependencies):**
+  - Schema Validation → Schema Enforcer
+  - Anomaly Detection → Anomaly Handling
+  - Null Detection → Null Handling
+
+- **Group 3 (Final processing):**
+  - Quality Rules → Deduplication → Feature Processing → Validation
+
+## 9. Error Handling Flow
+
+```
+Agent Error
+    ↓
+Log Error Message
+    ↓
+Update State with Error
+    ↓
+Continue to Next Agent (if non-fatal)
+    ↓
+OR
+    ↓
+Stop Workflow (if fatal)
+    ↓
+Return Error State
+```
+
+## 10. Performance Monitoring Points
+
+```
+┌─────────────────┐
+│ Performance     │
+│ Monitoring      │
+│ ┌─┬─┬─┬─┬─┬─┐  │
+│ │E│T│R│E│M│E│  │
+│ │x│i│e│r│c│o│  │
+│ │e│m│r│o│r│y│  │
+│ │c│ │ │ │ │ │  │
+│ │u│ │ │ │ │ │  │
+│ │t│ │ │ │ │ │  │
+│ │i│ │ │ │ │ │  │
+│ │o│ │ │ │ │ │  │
+│ │n│ │ │ │ │ │  │
+│ └─┴─┴─┴─┴─┴─┘  │
+└─────────────────┘
+
+Monitored at each agent:
+- Execution time
+- Records processed
+- Records modified
+- Memory usage
+- Errors encountered
+- Warnings generated
+```
+
+These diagrams provide a comprehensive view of the LangGraph workflow architecture, showing all nodes, edges, conditional routing, and parallel processing capabilities.
