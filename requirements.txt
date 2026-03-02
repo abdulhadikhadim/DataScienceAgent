@@ -20,3 +20,6 @@ aiofiles
 
 # Type hints
 pydantic==2.6.4
+
+# Parquet support
+pyarrow==15.0.0
