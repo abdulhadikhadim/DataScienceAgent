@@ -3,7 +3,7 @@ import numpy as np
 from typing import Dict, Any, List
 from datetime import datetime
 import re
-from langgraph_agents.state import PreprocessingState
+from state import PreprocessingState
 
 
 def detect_and_cast_types_node(state: PreprocessingState) -> PreprocessingState:

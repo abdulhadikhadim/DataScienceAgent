@@ -3,7 +3,7 @@ import numpy as np
 from typing import Dict, Any, List, Callable
 from dataclasses import dataclass
 from enum import Enum
-from langgraph_agents.state import PreprocessingState
+from state import PreprocessingState
 
 
 class RuleAction(Enum):

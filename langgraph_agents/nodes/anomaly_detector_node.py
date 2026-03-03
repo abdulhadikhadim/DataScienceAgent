@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import Dict, Any, List
-from langgraph_agents.state import PreprocessingState
+from state import PreprocessingState
 
 
 def detect_anomalies_node(state: PreprocessingState) -> PreprocessingState:

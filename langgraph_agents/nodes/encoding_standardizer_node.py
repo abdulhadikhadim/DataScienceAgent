@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any
 import chardet
-from langgraph_agents.state import PreprocessingState
+from state import PreprocessingState
 
 
 def standardize_encoding_node(state: PreprocessingState) -> PreprocessingState:

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 from typing import Dict, Any
-from langgraph_agents.state import PreprocessingState
+from state import PreprocessingState
 
 
 def load_data_node(state: PreprocessingState) -> PreprocessingState:

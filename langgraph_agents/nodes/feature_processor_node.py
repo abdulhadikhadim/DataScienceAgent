@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 from typing import Dict, Any
-from langgraph_agents.state import PreprocessingState
+from state import PreprocessingState
 
 
 def process_features_node(state: PreprocessingState) -> PreprocessingState:

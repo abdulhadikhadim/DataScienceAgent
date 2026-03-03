@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 import pandas as pd
 from datetime import datetime
-from langgraph_agents.enhanced_workflow import create_enhanced_preprocessing_workflow
-from langgraph_agents.enhanced_state import EnhancedPreprocessingState
-from langgraph_agents.core.parallel_executor import ParallelExecutor, DataFramePartitioner, ChunkProcessor, PerformanceMonitor
+from enhanced_workflow import create_enhanced_preprocessing_workflow
+from enhanced_state import EnhancedPreprocessingState
+from core.parallel_executor import ParallelExecutor, DataFramePartitioner, ChunkProcessor, PerformanceMonitor
 
 
 class EnhancedDataPreprocessingOrchestrator:
@@ -190,14 +190,48 @@ class EnhancedDataPreprocessingOrchestrator:
         else:
             partitions = DataFramePartitioner.partition_by_rows(df, n_partitions)
         
-        from langgraph_agents.core.parallel_executor import ParallelTask
+        from core.parallel_executor import ParallelTask
         
         def process_partition(partition_df: pd.DataFrame) -> pd.DataFrame:
-            temp_result = self.preprocess_data(
-                data_source="memory",
-                **kwargs
-            )
-            return temp_result.get("processed_data", partition_df)
+            # Create initial state with the partition data
+            initial_state = {
+                "raw_data": partition_df,
+                "processed_data": partition_df.copy(),
+                "data_source": "partition",
+                "data_format": "dataframe",
+                "anomalies_detected": [],
+                "null_values_info": {},
+                "preprocessing_steps": [],
+                "anomaly_handling_strategy": kwargs.get("anomaly_strategy", "cap"),
+                "null_handling_strategy": kwargs.get("null_strategy", "smart"),
+                "validation_passed": False,
+                "validation_errors": [],
+                "current_agent": "data_loader",
+                "workflow_status": "initialized",
+                "metadata": {},
+                "feedback_messages": [],
+                "iteration_count": 0,
+                "max_iterations": kwargs.get("max_iterations", 3),
+                "schema_validation_result": None,
+                "type_casting_changes": [],
+                "format_normalizations": [],
+                "encoding_fixes": [],
+                "referential_integrity_issues": [],
+                "quality_rule_violations": [],
+                "quarantine_records": None,
+                "duplicates_removed": 0,
+                "parallel_execution_enabled": False,
+                "chunk_processing_enabled": False,
+                "partition_strategy": None,
+                "performance_metrics": {}
+            }
+            
+            try:
+                final_state = self.workflow.invoke(initial_state)
+                return final_state.get("processed_data", partition_df)
+            except Exception as e:
+                print(f"Error processing partition: {e}")
+                return partition_df
         
         tasks = [
             ParallelTask(
@@ -216,7 +250,14 @@ class EnhancedDataPreprocessingOrchestrator:
                 "errors": result["errors"]
             }
         
-        processed_partitions = list(result["results"].values())
+        processed_partitions = [r for r in result["results"].values() if r is not None]
+        
+        if not processed_partitions:
+            return {
+                "success": False,
+                "error": "All partitions failed to process"
+            }
+        
         final_df = pd.concat(processed_partitions, ignore_index=True)
         
         return {
@@ -298,12 +339,15 @@ class EnhancedDataPreprocessingOrchestrator:
         if not self.last_state:
             return {"error": "No workflow executed"}
         
+        schema_result = self.last_state.get("schema_validation_result")
+        schema_valid = schema_result.get("valid", None) if schema_result else None
+        
         return {
             "workflow_status": self.last_state.get("workflow_status"),
             "validation_passed": self.last_state.get("validation_passed"),
             
             "data_quality": {
-                "schema_valid": self.last_state.get("schema_validation_result", {}).get("valid", None),
+                "schema_valid": schema_valid,
                 "anomalies_count": len(self.last_state.get("anomalies_detected", [])),
                 "null_columns": len(self.last_state.get("null_values_info", {})),
                 "quality_violations": len(self.last_state.get("quality_rule_violations", [])),

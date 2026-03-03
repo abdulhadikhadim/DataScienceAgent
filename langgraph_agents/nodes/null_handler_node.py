@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import Dict, Any
-from langgraph_agents.state import PreprocessingState
+from state import PreprocessingState
 
 
 def detect_null_values_node(state: PreprocessingState) -> PreprocessingState:
@@ -90,19 +90,19 @@ def handle_null_values_node(state: PreprocessingState) -> PreprocessingState:
             
             elif "int" in dtype or "float" in dtype:
                 if df_processed[col].skew() > 1:
-                    df_processed[col].fillna(df_processed[col].median(), inplace=True)
+                    df_processed[col] = df_processed[col].fillna(df_processed[col].median())
                     handled_columns.append(f"{col} (median)")
                 else:
-                    df_processed[col].fillna(df_processed[col].mean(), inplace=True)
+                    df_processed[col] = df_processed[col].fillna(df_processed[col].mean())
                     handled_columns.append(f"{col} (mean)")
             
             elif "object" in dtype or "category" in dtype:
                 mode_value = df_processed[col].mode()
                 if len(mode_value) > 0:
-                    df_processed[col].fillna(mode_value[0], inplace=True)
+                    df_processed[col] = df_processed[col].fillna(mode_value[0])
                     handled_columns.append(f"{col} (mode)")
                 else:
-                    df_processed[col].fillna("Unknown", inplace=True)
+                    df_processed[col] = df_processed[col].fillna("Unknown")
                     handled_columns.append(f"{col} (constant)")
         
         elif strategy == "drop_rows":
@@ -115,26 +115,26 @@ def handle_null_values_node(state: PreprocessingState) -> PreprocessingState:
         
         elif strategy == "mean":
             if "int" in dtype or "float" in dtype:
-                df_processed[col].fillna(df_processed[col].mean(), inplace=True)
+                df_processed[col] = df_processed[col].fillna(df_processed[col].mean())
                 handled_columns.append(f"{col} (mean)")
         
         elif strategy == "median":
             if "int" in dtype or "float" in dtype:
-                df_processed[col].fillna(df_processed[col].median(), inplace=True)
+                df_processed[col] = df_processed[col].fillna(df_processed[col].median())
                 handled_columns.append(f"{col} (median)")
         
         elif strategy == "mode":
             mode_value = df_processed[col].mode()
             if len(mode_value) > 0:
-                df_processed[col].fillna(mode_value[0], inplace=True)
+                df_processed[col] = df_processed[col].fillna(mode_value[0])
                 handled_columns.append(f"{col} (mode)")
         
         elif strategy == "forward_fill":
-            df_processed[col].fillna(method='ffill', inplace=True)
+            df_processed[col] = df_processed[col].ffill()
             handled_columns.append(f"{col} (forward fill)")
         
         elif strategy == "backward_fill":
-            df_processed[col].fillna(method='bfill', inplace=True)
+            df_processed[col] = df_processed[col].bfill()
             handled_columns.append(f"{col} (backward fill)")
     
     state["processed_data"] = df_processed
